@@ -1,5 +1,5 @@
 import copy
-import time
+import time # For testing
 
 class succesor:
   def __init__(self,board,g,h,parent):
