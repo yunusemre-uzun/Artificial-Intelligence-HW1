@@ -23,6 +23,9 @@ class succesor:
   def getParent(self):
     return self.parent
 
+  def getStep(self):
+    return self.g
+
 
 def calculateManhattan(board,goal,dimension):
   total_distance = 0
@@ -52,17 +55,27 @@ def ASearch(dimension,board,goal,max_cost):
   board_obj = succesor(board,0,calculateManhattan(board,goal,dimension,),-1)
   open_list = [board_obj]
   close_list = []
-  step = 1
   found = False
   goal_state = -1
   while(len(open_list)):
     if(found):
       break
+    '''
+    for each in open_list:
+      print(each.getBoard())
+    print("+++")
+    for each in close_list:
+      print(each.getBoard())
+    print("###")
+    time.sleep(10)
+    print(board_obj.getBoard())
+    print("---")
+    '''
     board_obj = open_list[0]
     open_list = open_list[1:]
     if(board_obj.getCost()>max_cost):
       continue
-    successors = findSuccesors(board_obj, goal,step, dimension) # List of successor objects
+    successors = findSuccesors(board_obj, goal, dimension) # List of successor objects
     for i in range(len(successors)):
       if(successors[i].isGoal()):
         found = True
@@ -70,16 +83,16 @@ def ASearch(dimension,board,goal,max_cost):
         break
       isIn = False
       # Search for open list
-      for j in range(len(open_list)):
-        if(successors[i].getBoard() == open_list[j]):
+      for j in range(0,len(open_list)):
+        if(successors[i].getBoard() == open_list[j].getBoard()):
           isIn = True
           break
       if(isIn and successors[i].getCost() > open_list[j].getCost()):
         continue
       isIn = False
       # Search for close list
-      for j in range(len(close_list)):
-        if(successors[i].getBoard() == close_list[j]):
+      for j in range(0,len(close_list)):
+        if(successors[i].getBoard() == close_list[j].getBoard()):
           isIn = True
           break
       if(isIn and successors[i].getCost() > close_list[j].getCost()):
@@ -88,19 +101,19 @@ def ASearch(dimension,board,goal,max_cost):
       open_list.append(copy.deepcopy(successors[i]))
     #After all successors processed sort open list and push this state to close list
     open_list.sort(key=lambda tup: tup.getCost())
-    step += 1
+    close_list.append(copy.deepcopy(board_obj))
   solution_stack = []
   if(goal_state == -1):
     print("FAILURE")
     return
   while(goal_state.getParent() != -1):
-    solution_stack.append(goal_state.getBoard())
+    solution_stack.append(goal_state)
     goal_state = goal_state.getParent()
-  solution_stack.append(goal_state.getBoard())
+  solution_stack.append(goal_state)
   solution_stack = solution_stack[::-1]
   print("SUCCESS\n")
   for i in range(len(solution_stack)):
-    printBoard(solution_stack[i],dimension)
+    printBoard(solution_stack[i].getBoard(),dimension)
     if(i!=len(solution_stack)-1):
       print("\n")
 
@@ -111,24 +124,24 @@ def printBoard(board,dimension):
     if(i != dimension-1):
       print()
 
-def findSuccesors(board,goal,step,dimension):
+def findSuccesors(board,goal,dimension):
   blank = findEntity("_", board.getBoard(), dimension)
   succesors = []
   if(blank[0] != dimension-1): #Blank tile is not at the bottom of the board
     res_board = findUp(board.getBoard(),blank,goal)
-    res_successor = succesor(res_board,step,calculateManhattan(res_board,goal,dimension),board)
+    res_successor = succesor(res_board,board.getStep()+1,calculateManhattan(res_board,goal,dimension),board)
     succesors.append(res_successor)
   if(blank[0] != 0): #Blank tile is not at the top of the board
     res_board = findDown(board.getBoard(),blank,goal)
-    res_successor = succesor(res_board,step,calculateManhattan(res_board,goal,dimension),board)
+    res_successor = succesor(res_board,board.getStep()+1,calculateManhattan(res_board,goal,dimension),board)
     succesors.append(res_successor)
   if(blank[1] != dimension-1): #Blank tile is not at the right of the board
     res_board = findLeft(board.getBoard(),blank,goal)
-    res_successor = succesor(res_board,step,calculateManhattan(res_board,goal,dimension),board)
+    res_successor = succesor(res_board,board.getStep()+1,calculateManhattan(res_board,goal,dimension),board)
     succesors.append(res_successor)
   if(blank[1] != 0): #Blank tile is not at the left of the board
     res_board = findRight(board.getBoard(),blank,goal)
-    res_successor = succesor(res_board,step,calculateManhattan(res_board,goal,dimension),board)
+    res_successor = succesor(res_board,board.getStep()+1,calculateManhattan(res_board,goal,dimension),board)
     succesors.append(res_successor)
   return succesors
 
