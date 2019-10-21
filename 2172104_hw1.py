@@ -51,10 +51,11 @@ def findEntity(target, board, dimension):
       if(int(entity)==target):
         return (i,j)
 
-def ASearch(dimension,board,goal,max_cost):
+def ASearch(dimension,board,goal,max_cost,ida):
   board_obj = succesor(board,0,calculateManhattan(board,goal,dimension,),-1)
   open_list = [board_obj]
   close_list = []
+  ida_list = []
   found = False
   goal_state = -1
   while(len(open_list)):
@@ -73,7 +74,10 @@ def ASearch(dimension,board,goal,max_cost):
     '''
     board_obj = open_list[0]
     open_list = open_list[1:]
-    if(board_obj.getCost()>max_cost):
+    if(board_obj.getCost()>max_cost and ida):
+      ida_list.append(board_obj)
+      continue
+    elif(board_obj.getCost()>max_cost):
       continue
     successors = findSuccesors(board_obj, goal, dimension) # List of successor objects
     for i in range(len(successors)):
@@ -102,6 +106,9 @@ def ASearch(dimension,board,goal,max_cost):
     #After all successors processed sort open list and push this state to close list
     open_list.sort(key=lambda tup: tup.getCost())
     close_list.append(copy.deepcopy(board_obj))
+  if(ida and not found):
+    ida_list.sort(key=lambda tup: tup.getCost())
+    return ida_list[0].getCost()
   solution_stack = []
   if(goal_state == -1):
     print("FAILURE")
@@ -116,6 +123,19 @@ def ASearch(dimension,board,goal,max_cost):
     printBoard(solution_stack[i].getBoard(),dimension)
     if(i!=len(solution_stack)-1):
       print("\n")
+  return -1
+
+def IDA(dimension,board,goal,max_cost):
+  fmax = calculateManhattan(board,goal,dimension)
+  while(True):
+    fmax = ASearch(dimension,board,goal,fmax,True)
+    #print(fmax)
+    if(fmax > max_cost):
+      print("FAILURE")
+      return
+    elif(fmax==-1):
+      return
+
 
 def printBoard(board,dimension):
   for i in range(dimension):
@@ -188,9 +208,9 @@ def getInput():
 def main():
   (algorithm,max_cost,dimension,board,goal) = getInput()
   if(algorithm == "A*"):
-    ASearch(dimension,board,goal,max_cost)
+    ASearch(dimension,board,goal,max_cost,False)
   else:
-    return 0
+    IDA(dimension,board,goal,max_cost)
 
 if __name__ == "__main__":
   main()
