@@ -51,11 +51,10 @@ def findEntity(target, board, dimension):
       if(int(entity)==target):
         return (i,j)
 
-def ASearch(dimension,board,goal,max_cost,ida):
+def ASearch(dimension,board,goal,max_cost):
   board_obj = succesor(board,0,calculateManhattan(board,goal,dimension,),-1)
   open_list = [board_obj]
   close_list = []
-  ida_list = []
   found = False
   goal_state = -1
   while(len(open_list)):
@@ -74,10 +73,7 @@ def ASearch(dimension,board,goal,max_cost,ida):
     '''
     board_obj = open_list[0]
     open_list = open_list[1:]
-    if(board_obj.getCost()>max_cost and ida):
-      ida_list.append(board_obj)
-      continue
-    elif(board_obj.getCost()>max_cost):
+    if(board_obj.getCost()>max_cost):
       continue
     successors = findSuccesors(board_obj, goal, dimension) # List of successor objects
     for i in range(len(successors)):
@@ -106,9 +102,6 @@ def ASearch(dimension,board,goal,max_cost,ida):
     #After all successors processed sort open list and push this state to close list
     open_list.sort(key=lambda tup: tup.getCost())
     close_list.append(copy.deepcopy(board_obj))
-  if(ida and not found):
-    ida_list.sort(key=lambda tup: tup.getCost())
-    return ida_list[0].getCost()
   solution_stack = []
   if(goal_state == -1):
     print("FAILURE")
@@ -123,18 +116,32 @@ def ASearch(dimension,board,goal,max_cost,ida):
     printBoard(solution_stack[i].getBoard(),dimension)
     if(i!=len(solution_stack)-1):
       print("\n")
-  return -1
 
 def IDA(dimension,board,goal,max_cost):
   fmax = calculateManhattan(board,goal,dimension)
+  board_obj = succesor(board,0,calculateManhattan(board,goal,dimension,),-1)
   while(True):
-    fmax = ASearch(dimension,board,goal,fmax,True)
-    #print(fmax)
+    (fmax,res_board) = limitedFSearch(dimension,board_obj,goal,fmax)
     if(fmax > max_cost):
       print("FAILURE")
-      return
+      return -1
     elif(fmax==-1):
-      return
+      return res_board
+
+def limitedFSearch(dimension,board_obj,goal,fmax):
+  if(board_obj.isGoal()):
+    return (-1,board_obj)
+  elif(board_obj.getCost()>fmax):
+    return (board_obj.getCost(),board_obj)
+  successors = findSuccesors(board_obj, goal, dimension) # List of successor objects
+  successors_cost = []
+  for successor in successors :
+    if(board_obj.getParent() != -1 and successor.getBoard() == board_obj.getParent().getBoard()):
+      continue
+    temp = limitedFSearch(dimension,successor,goal,fmax)
+    successors_cost.append(temp)
+  successors_cost.sort(key=lambda tup: tup[0])
+  return successors_cost[0]
 
 
 def printBoard(board,dimension):
@@ -208,11 +215,24 @@ def getInput():
 def main():
   (algorithm,max_cost,dimension,board,goal) = getInput()
   if(algorithm == "A*"):
-    ASearch(dimension,board,goal,max_cost,False)
+    ASearch(dimension,board,goal,max_cost)
+    return
   else:
-    IDA(dimension,board,goal,max_cost)
+    goal_state = IDA(dimension,board,goal,max_cost)
+    if(goal_state == -1):
+      return
+    solution_stack = []
+    while(goal_state.getParent() != -1):
+      solution_stack.append(goal_state)
+      goal_state = goal_state.getParent()
+    solution_stack.append(goal_state)
+    solution_stack = solution_stack[::-1]
+    print("SUCCESS\n")
+    for i in range(len(solution_stack)):
+      printBoard(solution_stack[i].getBoard(),dimension)
+      if(i!=len(solution_stack)-1):
+        print("\n")
+
 
 if __name__ == "__main__":
   main()
-
-
